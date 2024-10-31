@@ -1,0 +1,204 @@
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Lock, Key, AlertTriangle, Shield, Clock } from 'lucide-react';
+
+const EncryptionStrengthSimulation = () => {
+  const [phase, setPhase] = useState(0);
+  
+  const phases = [
+    {
+      title: "1. Configuration Faible",
+      description: "L'application utilise une clé de chiffrement trop courte (DES - 56 bits)",
+      code: `// Configuration cryptographique faible
+crypto.createCipher('des', key);  // ⚠️ DES 56-bits`,
+      visual: {
+        keySize: 56,
+        timeToBreak: "quelques heures",
+        security: "faible",
+        cost: "$100",
+        algorithm: "DES"
+      }
+    },
+    {
+      title: "2. Attaque Possible",
+      description: "Un attaquant peut casser ce chiffrement par force brute",
+      code: `// Temps de cassage selon la longueur de clé
+DES (56-bits):     quelques heures
+3DES (112-bits):   quelques années
+AES-128:           des milliards d'années
+AES-256:           impossible`,
+      visual: {
+        keySize: 56,
+        timeToBreak: "en cours...",
+        security: "compromis",
+        cost: "$100",
+        algorithm: "DES"
+      }
+    },
+    {
+      title: "3. Données Compromises",
+      description: "Les données sensibles sont exposées à cause du chiffrement faible",
+      code: `// Données déchiffrées
+password: "secret123"
+apiKey: "ak_1234567"
+creditCard: "4532..."`,
+      visual: {
+        keySize: 56,
+        timeToBreak: "terminé",
+        security: "compromis",
+        cost: "$100",
+        algorithm: "DES"
+      }
+    },
+    {
+      title: "4. Solution Sécurisée",
+      description: "Utilisation d'un algorithme moderne avec une clé appropriée",
+      code: `// Configuration sécurisée
+crypto.createCipheriv(
+  'aes-256-gcm',    // AES-256 avec GCM
+  key,              // Clé 256 bits
+  iv                // Vecteur d'init.
+);`,
+      visual: {
+        keySize: 256,
+        timeToBreak: "impossible",
+        security: "fort",
+        cost: "$1,000,000,000+",
+        algorithm: "AES-256"
+      }
+    }
+  ];
+
+  const EncryptionVisualizer = ({ data }) => {
+    const { keySize, timeToBreak, security, cost, algorithm } = data;
+    
+    return (
+      <div className="flex flex-col items-center space-y-6 p-6">
+        <div className="flex items-center space-x-4">
+          <Key className={`w-8 h-8 ${
+            keySize >= 256 ? 'text-green-500' :
+            keySize >= 128 ? 'text-yellow-500' :
+            'text-red-500'
+          }`} />
+          <div className="text-lg text-white">
+            Taille de clé: {keySize} bits
+          </div>
+        </div>
+
+        <div className="w-full bg-gray-800 rounded-lg p-4">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-white">Force de la clé:</span>
+            <div className="flex space-x-1">
+              {[...Array(8)].map((_, i) => (
+                <div
+                  key={i}
+                  className={`w-4 h-4 rounded ${
+                    i < keySize/32 ? 
+                    keySize >= 256 ? 'bg-green-500' :
+                    keySize >= 128 ? 'bg-yellow-500' :
+                    'bg-red-500'
+                    : 'bg-gray-600'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-white">Algorithme:</span>
+            <span className={`font-mono ${
+              algorithm === 'AES-256' ? 'text-green-500' :
+              algorithm === 'AES-128' ? 'text-yellow-500' :
+              'text-red-500'
+            }`}>{algorithm}</span>
+          </div>
+
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-white">Temps de cassage:</span>
+            <span className={`${
+              timeToBreak === 'impossible' ? 'text-green-500' :
+              timeToBreak === 'en cours...' ? 'text-yellow-500' :
+              'text-red-500'
+            }`}>{timeToBreak}</span>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-white">Coût de l'attaque:</span>
+            <span className={`${
+              parseInt(cost.replace(/[^0-9]/g, '')) > 1000000 ? 'text-green-500' :
+              'text-red-500'
+            }`}>{cost}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          {security === 'fort' ? (
+            <Shield className="text-green-500 w-8 h-8" />
+          ) : security === 'compromis' ? (
+            <AlertTriangle className="text-red-500 w-8 h-8" />
+          ) : (
+            <Lock className={`w-8 h-8 ${
+              security === 'fort' ? 'text-green-500' :
+              security === 'moyen' ? 'text-yellow-500' :
+              'text-red-500'
+            }`} />
+          )}
+          <div className="text-lg text-white capitalize">
+            Sécurité: {security}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="w-full max-w-4xl">
+      <Card className="bg-slate-900">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-white flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              {phases[phase].title}
+            </CardTitle>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setPhase(Math.max(0, phase - 1))}
+                disabled={phase === 0}
+              >
+                Précédent
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setPhase(Math.min(phases.length - 1, phase + 1))}
+                disabled={phase === phases.length - 1}
+              >
+                Suivant
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <Card className="bg-black p-4">
+                <p className="text-white mb-4">{phases[phase].description}</p>
+                <pre className="text-green-400 font-mono text-sm mb-4 p-2 bg-gray-900 rounded whitespace-pre-wrap">
+                  {phases[phase].code}
+                </pre>
+              </Card>
+            </div>
+            <Card className="bg-black">
+              <EncryptionVisualizer data={phases[phase].visual} />
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default EncryptionStrengthSimulation;
